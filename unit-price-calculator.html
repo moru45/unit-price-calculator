@@ -1,0 +1,461 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>単価計算アプリ</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            padding: 20px;
+            color: #333;
+        }
+
+        .container {
+            max-width: 400px;
+            margin: 0 auto;
+            background: white;
+            border-radius: 20px;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.2);
+            overflow: hidden;
+        }
+
+        .header {
+            background: linear-gradient(135deg, #4CAF50 0%, #45a049 100%);
+            color: white;
+            padding: 25px 20px;
+            text-align: center;
+        }
+
+        .header h1 {
+            font-size: 24px;
+            font-weight: 600;
+            margin-bottom: 5px;
+        }
+
+        .header p {
+            font-size: 14px;
+            opacity: 0.9;
+        }
+
+        .content {
+            padding: 30px 20px;
+        }
+
+        .input-section {
+            margin-bottom: 30px;
+        }
+
+        .input-group {
+            margin-bottom: 25px;
+        }
+
+        .input-label {
+            display: block;
+            font-size: 16px;
+            font-weight: 600;
+            margin-bottom: 10px;
+            color: #555;
+        }
+
+        .input-container {
+            display: flex;
+            gap: 10px;
+            align-items: center;
+        }
+
+        .input-field {
+            flex: 1;
+            padding: 15px;
+            border: 2px solid #e0e0e0;
+            border-radius: 12px;
+            font-size: 18px;
+            transition: all 0.3s ease;
+            background: #f8f9fa;
+        }
+
+        .input-field:focus {
+            outline: none;
+            border-color: #4CAF50;
+            background: white;
+            box-shadow: 0 0 0 3px rgba(76, 175, 80, 0.1);
+        }
+
+        .voice-btn {
+            width: 50px;
+            height: 50px;
+            border: none;
+            border-radius: 50%;
+            background: linear-gradient(135deg, #FF6B6B 0%, #ee5a52 100%);
+            color: white;
+            font-size: 20px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .voice-btn:hover {
+            transform: scale(1.05);
+            box-shadow: 0 5px 15px rgba(255, 107, 107, 0.4);
+        }
+
+        .voice-btn:active {
+            transform: scale(0.95);
+        }
+
+        .voice-btn.listening {
+            background: linear-gradient(135deg, #FF4444 0%, #cc0000 100%);
+            animation: pulse 1.5s infinite;
+        }
+
+        @keyframes pulse {
+            0% { box-shadow: 0 0 0 0 rgba(255, 68, 68, 0.7); }
+            70% { box-shadow: 0 0 0 10px rgba(255, 68, 68, 0); }
+            100% { box-shadow: 0 0 0 0 rgba(255, 68, 68, 0); }
+        }
+
+        .unit-selector {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 10px;
+            margin-bottom: 30px;
+        }
+
+        .unit-btn {
+            padding: 15px 10px;
+            border: 2px solid #e0e0e0;
+            border-radius: 12px;
+            background: #f8f9fa;
+            color: #666;
+            font-size: 14px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            text-align: center;
+        }
+
+        .unit-btn:hover {
+            border-color: #4CAF50;
+            color: #4CAF50;
+        }
+
+        .unit-btn.active {
+            background: linear-gradient(135deg, #4CAF50 0%, #45a049 100%);
+            color: white;
+            border-color: #4CAF50;
+            transform: translateY(2px);
+            box-shadow: inset 0 3px 6px rgba(0,0,0,0.2);
+        }
+
+        .result-section {
+            background: linear-gradient(135deg, #f8f9fa 0%, #e9ecef 100%);
+            border-radius: 15px;
+            padding: 25px;
+            text-align: center;
+            margin-bottom: 20px;
+        }
+
+        .result-label {
+            font-size: 16px;
+            color: #666;
+            margin-bottom: 10px;
+        }
+
+        .result-value {
+            font-size: 32px;
+            font-weight: 700;
+            color: #4CAF50;
+            margin-bottom: 5px;
+        }
+
+        .result-unit {
+            font-size: 18px;
+            color: #888;
+        }
+
+        .clear-btn {
+            width: 100%;
+            padding: 15px;
+            border: none;
+            border-radius: 12px;
+            background: linear-gradient(135deg, #6c757d 0%, #5a6268 100%);
+            color: white;
+            font-size: 16px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s ease;
+        }
+
+        .clear-btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 5px 15px rgba(108, 117, 125, 0.4);
+        }
+
+        .clear-btn:active {
+            transform: translateY(0);
+        }
+
+        .status-message {
+            text-align: center;
+            padding: 10px;
+            margin-bottom: 20px;
+            border-radius: 8px;
+            font-size: 14px;
+            display: none;
+        }
+
+        .status-message.info {
+            background: #d1ecf1;
+            color: #0c5460;
+            border: 1px solid #b8daff;
+        }
+
+        .status-message.error {
+            background: #f8d7da;
+            color: #721c24;
+            border: 1px solid #f5c6cb;
+        }
+
+        @media (max-width: 480px) {
+            body {
+                padding: 10px;
+            }
+
+            .content {
+                padding: 20px 15px;
+            }
+
+            .unit-selector {
+                grid-template-columns: repeat(2, 1fr);
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>単価計算</h1>
+            <p>価格と容量を入力して単価を計算</p>
+        </div>
+        
+        <div class="content">
+            <div class="status-message" id="statusMessage"></div>
+            
+            <div class="input-section">
+                <div class="input-group">
+                    <label class="input-label">価格（円）</label>
+                    <div class="input-container">
+                        <input type="number" class="input-field" id="priceInput" placeholder="例: 298" step="0.01">
+                        <button class="voice-btn" id="priceVoiceBtn" title="音声入力">🎙️</button>
+                    </div>
+                </div>
+                
+                <div class="input-group">
+                    <label class="input-label">容量</label>
+                    <div class="input-container">
+                        <input type="number" class="input-field" id="volumeInput" placeholder="例: 500" step="0.01">
+                        <button class="voice-btn" id="volumeVoiceBtn" title="音声入力">🎙️</button>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="unit-selector">
+                <button class="unit-btn active" data-unit="100g">100gあたり</button>
+                <button class="unit-btn" data-unit="1kg">1kgあたり</button>
+                <button class="unit-btn" data-unit="100ml">100mlあたり</button>
+                <button class="unit-btn" data-unit="1L">1Lあたり</button>
+                <button class="unit-btn" data-unit="100個">100個あたり</button>
+                <button class="unit-btn" data-unit="1個">1個あたり</button>
+            </div>
+            
+            <div class="result-section">
+                <div class="result-label">単価</div>
+                <div class="result-value" id="resultValue">-</div>
+                <div class="result-unit" id="resultUnit">100gあたり</div>
+            </div>
+            
+            <button class="clear-btn" id="clearBtn">クリア</button>
+        </div>
+    </div>
+
+    <script>
+        class UnitPriceCalculator {
+            constructor() {
+                this.currentUnit = '100g';
+                this.recognition = null;
+                this.activeInput = null;
+                this.init();
+            }
+
+            init() {
+                this.bindEvents();
+                this.initSpeechRecognition();
+                this.calculate();
+            }
+
+            bindEvents() {
+                // 入力フィールドのイベント
+                document.getElementById('priceInput').addEventListener('input', () => this.calculate());
+                document.getElementById('volumeInput').addEventListener('input', () => this.calculate());
+
+                // 音声入力ボタン
+                document.getElementById('priceVoiceBtn').addEventListener('click', () => this.startVoiceInput('price'));
+                document.getElementById('volumeVoiceBtn').addEventListener('click', () => this.startVoiceInput('volume'));
+
+                // 単位選択ボタン
+                document.querySelectorAll('.unit-btn').forEach(btn => {
+                    btn.addEventListener('click', (e) => this.selectUnit(e.target.dataset.unit, e.target));
+                });
+
+                // クリアボタン
+                document.getElementById('clearBtn').addEventListener('click', () => this.clear());
+            }
+
+            initSpeechRecognition() {
+                if (!('webkitSpeechRecognition' in window) && !('SpeechRecognition' in window)) {
+                    this.showStatus('音声認識がサポートされていません', 'error');
+                    return;
+                }
+
+                const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
+                this.recognition = new SpeechRecognition();
+                this.recognition.lang = 'ja-JP';
+                this.recognition.continuous = false;
+                this.recognition.interimResults = false;
+
+                this.recognition.onresult = (event) => {
+                    const result = event.results[0][0].transcript;
+                    this.processVoiceInput(result);
+                };
+
+                this.recognition.onerror = (event) => {
+                    this.showStatus('音声認識エラー: ' + event.error, 'error');
+                    this.stopVoiceInput();
+                };
+
+                this.recognition.onend = () => {
+                    this.stopVoiceInput();
+                };
+            }
+
+            startVoiceInput(inputType) {
+                if (!this.recognition) {
+                    this.showStatus('音声認識が利用できません', 'error');
+                    return;
+                }
+
+                this.activeInput = inputType;
+                const btn = document.getElementById(inputType + 'VoiceBtn');
+                btn.classList.add('listening');
+                
+                this.showStatus('音声を聞いています...', 'info');
+                this.recognition.start();
+            }
+
+            stopVoiceInput() {
+                if (this.activeInput) {
+                    const btn = document.getElementById(this.activeInput + 'VoiceBtn');
+                    btn.classList.remove('listening');
+                }
+                this.activeInput = null;
+                this.hideStatus();
+            }
+
+            processVoiceInput(text) {
+                // 数字を抽出
+                const numbers = text.match(/\d+(\.\d+)?/g);
+                if (numbers && numbers.length > 0) {
+                    const value = parseFloat(numbers[0]);
+                    const inputId = this.activeInput === 'price' ? 'priceInput' : 'volumeInput';
+                    document.getElementById(inputId).value = value;
+                    this.calculate();
+                    this.showStatus(`${value}を入力しました`, 'info');
+                } else {
+                    this.showStatus('数字が認識できませんでした', 'error');
+                }
+            }
+
+            selectUnit(unit, btnElement) {
+                // 他のボタンのactiveクラスを削除
+                document.querySelectorAll('.unit-btn').forEach(btn => btn.classList.remove('active'));
+                // 選択されたボタンにactiveクラスを追加
+                btnElement.classList.add('active');
+                
+                this.currentUnit = unit;
+                document.getElementById('resultUnit').textContent = unit + 'あたり';
+                this.calculate();
+            }
+
+            calculate() {
+                const price = parseFloat(document.getElementById('priceInput').value) || 0;
+                const volume = parseFloat(document.getElementById('volumeInput').value) || 0;
+
+                if (price <= 0 || volume <= 0) {
+                    document.getElementById('resultValue').textContent = '-';
+                    return;
+                }
+
+                let unitPrice = 0;
+                const unitValue = this.getUnitValue(this.currentUnit);
+                
+                if (unitValue > 0) {
+                    unitPrice = (price / volume) * unitValue;
+                }
+
+                document.getElementById('resultValue').textContent = 
+                    unitPrice > 0 ? '¥' + unitPrice.toFixed(2) : '-';
+            }
+
+            getUnitValue(unit) {
+                const unitMap = {
+                    '100g': 100,
+                    '1kg': 1000,
+                    '100ml': 100,
+                    '1L': 1000,
+                    '100個': 100,
+                    '1個': 1
+                };
+                return unitMap[unit] || 1;
+            }
+
+            clear() {
+                document.getElementById('priceInput').value = '';
+                document.getElementById('volumeInput').value = '';
+                document.getElementById('resultValue').textContent = '-';
+                this.hideStatus();
+            }
+
+            showStatus(message, type) {
+                const statusEl = document.getElementById('statusMessage');
+                statusEl.textContent = message;
+                statusEl.className = 'status-message ' + type;
+                statusEl.style.display = 'block';
+                
+                if (type === 'info') {
+                    setTimeout(() => this.hideStatus(), 3000);
+                }
+            }
+
+            hideStatus() {
+                const statusEl = document.getElementById('statusMessage');
+                statusEl.style.display = 'none';
+            }
+        }
+
+        // アプリ初期化
+        document.addEventListener('DOMContentLoaded', () => {
+            new UnitPriceCalculator();
+        });
+    </script>
+</body>
+</html>
