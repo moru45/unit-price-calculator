@@ -355,6 +355,16 @@
                 // 入力フィールドのイベント
                 document.getElementById('priceInput').addEventListener('input', () => this.calculate());
                 document.getElementById('volumeInput').addEventListener('input', () => this.calculate());
+                
+                // 入力完了時のイベント（履歴追加用）
+                document.getElementById('priceInput').addEventListener('blur', () => this.onInputComplete());
+                document.getElementById('volumeInput').addEventListener('blur', () => this.onInputComplete());
+                document.getElementById('priceInput').addEventListener('keypress', (e) => {
+                    if (e.key === 'Enter') this.onInputComplete();
+                });
+                document.getElementById('volumeInput').addEventListener('keypress', (e) => {
+                    if (e.key === 'Enter') this.onInputComplete();
+                });
 
                 // 音声入力ボタン
                 document.getElementById('priceVoiceBtn').addEventListener('click', () => this.startVoiceInput('price'));
@@ -427,6 +437,7 @@
                     const inputId = this.activeInput === 'price' ? 'priceInput' : 'volumeInput';
                     document.getElementById(inputId).value = value;
                     this.calculate();
+                    this.onInputComplete(); // 音声入力完了時も履歴に追加
                     this.showStatus(`${value}を入力しました`, 'info');
                 } else {
                     this.showStatus('数字が認識できませんでした', 'error');
@@ -462,10 +473,26 @@
 
                 const resultText = unitPrice > 0 ? '¥' + unitPrice.toFixed(2) : '-';
                 document.getElementById('resultValue').textContent = resultText;
+            }
 
-                // 履歴に追加
-                if (unitPrice > 0) {
-                    this.addToHistory(volume, price, this.currentUnit, unitPrice);
+            onInputComplete() {
+                const price = parseFloat(document.getElementById('priceInput').value) || 0;
+                const volume = parseFloat(document.getElementById('volumeInput').value) || 0;
+
+                if (price > 0 && volume > 0) {
+                    const unitValue = this.getUnitValue(this.currentUnit);
+                    const unitPrice = (price / volume) * unitValue;
+                    
+                    // 同じ計算がすでに履歴にないかチェック
+                    const exists = this.history.some(item => 
+                        item.price === price && 
+                        item.volume === volume && 
+                        item.unit === this.currentUnit
+                    );
+                    
+                    if (!exists && unitPrice > 0) {
+                        this.addToHistory(volume, price, this.currentUnit, unitPrice);
+                    }
                 }
             }
 
